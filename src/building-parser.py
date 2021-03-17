@@ -39,6 +39,7 @@
 # %%
 from PIL import Image
 from numpy import array, asarray, array_equal, savetxt
+from json import dumps
 
 # %% [markdown]
 # Then, create the color constants to be mapped to the characters:
@@ -70,8 +71,12 @@ def image_to_data(input_file, output_file, budget, router_range, router_cost, ba
     # converts image to numpy array
     data = asarray(image)
 
-    # saves the configurations in the first line
-    matrix = str(config) + "\n"
+    # backbone coordinates
+    bcoords = {"x": 0, "y": 0}
+    x = 0
+    y = 0
+
+    matrix = ""
 
     # generates the ASCII codes matching each pixel color
     for i in data:
@@ -85,11 +90,22 @@ def image_to_data(input_file, output_file, budget, router_range, router_cost, ba
                 line += "#"
             elif array_equal(j,GREEN):
                 line += "b"
+                bcoords["x"] = x
+                bcoords["y"] = y
             elif array_equal(j,BLUE):
                 line += "R"
             elif array_equal(j,LBLUE):
                 line += "r"
+            x += 1
+        y += 1
+        x = 0
         matrix += line + "\n"
+
+    config["x"] = bcoords["x"]
+    config["y"] = bcoords["y"]
+
+    # saves the configurations in the first line
+    matrix = dumps(config) + "\n" + matrix
 
     # opens the file descriptor
     f = open(output_file,"w")
