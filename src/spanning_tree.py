@@ -21,4 +21,4 @@ def kruskal(num_routers, edges):
             minimum_spanning_tree.append(edge)
             vertices[parent_a] = parent_b
 
-    return minimum_spanning_tree_cost
+    return (minimum_spanning_tree_cost,minimum_spanning_tree)

@@ -1,5 +1,7 @@
 from cell import *
+from router import Router
 from spanning_tree import kruskal
+from executor import Executor
 import json
 import math
 
@@ -41,6 +43,8 @@ class BuildPlan:
         self.max_x = x
         self.max_y = y
 
+        self.covered_targets = set()
+
     def __str__(self, configs = False):
         
         matrix = ""
@@ -63,23 +67,23 @@ class BuildPlan:
 
     def get_covered_targets(self):
         covered_targets = set()
-        for router in self.routers:
-            covered_targets.update(router.get_covered_targets(self))
-        return covered_targets
+
+        with Executor.get_process_executor() as executor:
+            futures = [executor.submit(router.get_covered_targets,self) for router in self.routers]
+            results = [f.result() for f in futures]
+            for r in results:
+                covered_targets.update(r)
         
-    def backbone_cost(self):
+        self.covered_targets = covered_targets
+        
+        return covered_targets
+
+    def get_spanning_tree(self):
         def euclid_distance(coords1, coords2):
-            x1 = coords1.x
-            y1 = coords1.y
-
-            x2 = coords2.x
-            y2 = coords2.y
-
-            dx = abs(x2-x1)
-            dy = abs(y2-y1)
-
-            _min = min(dx,dy)
-            _max = max(dx,dy)
+            x1, y1 = coords1.x, coords1.y
+            x2, y2 = coords2.x, coords2.y
+            dx, dy = abs(x2-x1), abs(y2-y1)
+            _min, _max = min(dx,dy), max(dx,dy)
 
             diagonal = _min
             straight = _max - _min
@@ -97,17 +101,94 @@ class BuildPlan:
                 distance = euclid_distance(c1,c2)
                 edges.append((i,j,distance))
     
-        cost = kruskal(len(vertices), edges)
+        return kruskal(len(vertices), edges)
+        
+    def get_backbone_cost(self):
+        return self.get_spanning_tree()[0]
 
-        return cost
+    def get_total_cost(self):
 
-    def total_cost(self):
-
-        c = self.get_covered_targets()
+        c = len(self.get_covered_targets())
         b = self.configs["budget"]
-        nb = self.backbone_cost()
+        nb = self.get_backbone_cost()
         pb = self.configs["backbone-cost"]
         nr = len(self.routers)
         pr = self.configs["router-cost"]
 
         return 1000 * c + (b - (nb * pb + nr * pr))
+
+    def get_draw(self):
+        
+        if len(self.covered_targets) == 0:
+            self.get_covered_targets()
+
+        def diagonal_line(coords1,coords2):
+            
+            cells = []
+            
+            x1, y1 = coords1.x, coords1.y
+            x2, y2 = coords2.x, coords2.y
+            dx, dy = abs(x2-x1), abs(y2-y1)
+            _min, _max = min(dx,dy), max(dx,dy)
+
+            left, right = min(x1,x2), max(x1,x2)
+            up, down = max(y1,y2), min(y1,y2)
+
+            if _max == dx:
+                ny = y1
+                if x2 == left:
+                    ny = y2
+
+                while dx > dy:
+                    left += 1
+                    cells.append(Cell(Coords(left, ny),"b"))
+                    dx -= 1
+
+                step_y = 1
+                if ny == up:
+                    step_y = -1
+
+                while dx > 1:
+                    left, ny = left + 1, ny + step_y
+                    cells.append(Cell(Coords(left,ny),"b"))
+                    dx -= 1
+                
+
+            elif _max == dy:
+                nx = x1
+                if y2 == down:
+                    nx = x2
+
+                while dy > dx:
+                    down += 1
+                    cells.append(Cell(Coords(nx, down),"b"))
+                    dy -= 1
+
+                step_x = 1
+                if nx == right:
+                    step_x = -1
+
+                while dx > 1:
+                    nx, down = nx + step_x, down + 1
+                    cells.append(Cell(Coords(nx,down),"b"))
+                    dx -= 1
+            
+            return cells                
+
+        targets = list(self.covered_targets)
+        
+        for c in targets:
+            self.map[c.coords] = Cell(c.coords,"r")
+        
+        vertices = self.routers + [Backbone(Coords(self.configs["x"],self.configs["y"]))]
+
+        tree = self.get_spanning_tree()[1]
+
+        for (v1,v2,_c) in tree:
+            _v1 = vertices[v1]
+            _v2 = vertices[v2]
+            cells = diagonal_line(_v1.coords, _v2.coords)
+            for c in cells:
+                self.map[c.coords] = c
+
+        return str(self)
