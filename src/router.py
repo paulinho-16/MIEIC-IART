@@ -1,6 +1,8 @@
+from math import log10
 from coords import Coords
 from cell import *
 from executor import Executor
+from random import randint
 
 class Router(Cell):
     def __init__(self, coords, rrange):
@@ -78,3 +80,20 @@ class Router(Cell):
             return final_cells
         
         return generate_targets(build_plan)
+
+    def generate_neighbour(self, build_plan):  # Basic "Hill Climbing" (random)
+        neighbourhood_range = int(log10(self.rrange) * 5)
+        x = self.coords.x
+        y = self.coords.y
+
+        nx = x
+        ny = y
+
+        obj = build_plan.map.get(Coords(nx,ny), None)
+
+        while (nx,ny) == (x, y) or (obj and type(obj) != Target):
+            nx = randint(self.coords.x - neighbourhood_range, self.coords.x + neighbourhood_range)
+            ny = randint(self.coords.y - neighbourhood_range, self.coords.y + neighbourhood_range)
+            obj = build_plan.map.get(Coords(nx,ny), None)
+        
+        return Coords(nx,ny)

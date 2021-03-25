@@ -1,16 +1,19 @@
+
 from cell import *
 from router import Router
 from spanning_tree import kruskal
 from executor import Executor
 import json
-import math
+from random import randint
 
 class BuildPlan:
 
     def __init__(self, input_file):
         self.map = dict()
         self.routers = []
+        self.target_count = 0
 
+        self.input_file = input_file
         f = open(input_file, 'r')
         lines = f.readlines()
 
@@ -27,6 +30,7 @@ class BuildPlan:
                     self.map[coords] = Void(coords)
                 elif c == ".":
                     self.map[coords] = Target(coords)
+                    self.target_count += 1
                 elif c == "#":
                     self.map[coords] = Wall(coords)
                 elif c == "b":
@@ -44,6 +48,28 @@ class BuildPlan:
         self.max_y = y
 
         self.covered_targets = set()
+
+    def generate_routers(self):
+        router_range = int(self.configs["router-range"])
+
+        optimal_nrouters = self.target_count // router_range
+
+        while optimal_nrouters * int(self.configs["router-cost"]) > self.configs["budget"]:
+            optimal_nrouters -= 1
+        
+        for i in range(optimal_nrouters):
+            while True:
+                nx = randint(0, self.max_x)
+                ny = randint(0, self.max_y)
+                coords = Coords(nx, ny)
+                obj = self.map.get(coords, None)
+                if obj and type(obj) == Target:
+                    r = Router(coords, router_range)
+                    self.routers.append(r)
+                    self.map[coords] = r
+                    break
+        print(self.routers)
+
 
     def __str__(self, configs = False):
         
@@ -106,7 +132,7 @@ class BuildPlan:
     def get_backbone_cost(self):
         return self.get_spanning_tree()[0]
 
-    def get_total_cost(self):
+    def get_total_score(self):
 
         c = len(self.get_covered_targets())
         b = self.configs["budget"]
@@ -115,7 +141,7 @@ class BuildPlan:
         nr = len(self.routers)
         pr = self.configs["router-cost"]
 
-        return 1000 * c + (b - (nb * pb + nr * pr))
+        return c + (b - (nb * pb + nr * pr))
 
     def get_draw(self):
         
@@ -189,6 +215,38 @@ class BuildPlan:
             _v2 = vertices[v2]
             cells = diagonal_line(_v1.coords, _v2.coords)
             for c in cells:
-                self.map[c.coords] = c
+                lc = self.map.get(c.coords,None)
+                if lc and type(lc) != Router:
+                    self.map[c.coords] = c
 
         return str(self)
+
+    def generate_neighbour(self):
+        num_routers = len(self.routers)
+        old_routers = set([i for i in range(num_routers)])
+        num_routers_to_change = randint(1, num_routers // 2 + 1)
+        newbp = BuildPlan(self.input_file)
+
+        indexes = set()
+        i = 0
+
+        while i < num_routers_to_change:
+            index = randint(0, num_routers-1)
+            if index not in indexes:
+                indexes.add(index)
+                i += 1
+
+        prev_routers = old_routers - indexes
+
+        for r in indexes:
+            router = self.routers[r]
+            new_router = Router(router.generate_neighbour(newbp), router.rrange)
+            newbp.routers.append(new_router)
+            newbp.map[new_router.coords] = new_router
+
+        for r in prev_routers:
+            router = self.routers[r]
+            newbp.routers.append(router)
+            newbp.map[router.coords] = router
+
+        return newbp
