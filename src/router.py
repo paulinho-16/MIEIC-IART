@@ -91,7 +91,7 @@ class Router(Cell):
 
         obj = build_plan.map.get(Coords(nx,ny), None)
 
-        while (nx,ny) == (x, y) or (obj and type(obj) != Target):
+        while (nx,ny) == (x, y) or (obj and type(obj) != Target) or not obj:
             nx = randint(self.coords.x - neighbourhood_range, self.coords.x + neighbourhood_range)
             ny = randint(self.coords.y - neighbourhood_range, self.coords.y + neighbourhood_range)
             obj = build_plan.map.get(Coords(nx,ny), None)

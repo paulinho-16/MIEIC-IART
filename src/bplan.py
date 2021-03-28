@@ -5,72 +5,52 @@ from spanning_tree import kruskal
 from executor import Executor
 import json
 from random import randint
+import copy
 
 class BuildPlan:
 
-    def __init__(self, input_file):
+    def __init__(self, input_file, generate_map = True):
         self.map = dict()
         self.routers = []
         self.target_count = 0
-
-        self.input_file = input_file
-        f = open(input_file, 'r')
-        lines = f.readlines()
-
-        self.configs = json.loads(lines[0])
-
-        x = 0
-        y = 0
-
-        for l in lines[1:]:
-            x = 0
-            for c in l:
-                coords = Coords(x,y)
-                if c == "-":
-                    self.map[coords] = Void(coords)
-                elif c == ".":
-                    self.map[coords] = Target(coords)
-                    self.target_count += 1
-                elif c == "#":
-                    self.map[coords] = Wall(coords)
-                elif c == "b":
-                    self.map[coords] = Backbone(coords)
-                elif c == "R":
-                    self.map[coords] = Router(coords)
-                elif c == "r":
-                    self.map[coords] = Range(coords)
-                x += 1
-            y += 1
-        
-        f.close()
-        
-        self.max_x = x
-        self.max_y = y
-
+        self.total_score = 0
         self.covered_targets = set()
+        self.input_file = input_file
 
-    def generate_routers(self):
-        router_range = int(self.configs["router-range"])
+        if generate_map:
+            f = open(input_file, 'r')
+            lines = f.readlines()
+            self.configs = json.loads(lines[0])
 
-        optimal_nrouters = self.target_count // router_range
+            x = 0
+            y = 0
 
-        while optimal_nrouters * int(self.configs["router-cost"]) > self.configs["budget"]:
-            optimal_nrouters -= 1
-        
-        for i in range(optimal_nrouters):
-            while True:
-                nx = randint(0, self.max_x)
-                ny = randint(0, self.max_y)
-                coords = Coords(nx, ny)
-                obj = self.map.get(coords, None)
-                if obj and type(obj) == Target:
-                    r = Router(coords, router_range)
-                    self.routers.append(r)
-                    self.map[coords] = r
-                    break
-        print(self.routers)
+            for l in lines[1:]:
+                x = 0
+                for c in l:
+                    coords = Coords(x,y)
+                    if c == "-":
+                        self.map[coords] = Void(coords)
+                    elif c == ".":
+                        self.map[coords] = Target(coords)
+                        self.target_count += 1
+                    elif c == "#":
+                        self.map[coords] = Wall(coords)
+                    elif c == "b":
+                        self.map[coords] = Backbone(coords)
+                    elif c == "R":
+                        self.map[coords] = Router(coords)
+                    elif c == "r":
+                        self.map[coords] = Range(coords)
+                    x += 1
+                y += 1
+            
+            f.close()
 
-
+            self.max_x = x
+            self.max_y = y
+            self.original_map = copy.deepcopy(self.map)
+            
     def __str__(self, configs = False):
         
         matrix = ""
@@ -84,6 +64,9 @@ class BuildPlan:
             matrix += "\n"
         
         return matrix
+
+    def __lt__(self, other):
+        return self.total_score < other.total_score
 
     def get_cell(self, coords):
         return self.map.get(coords,False)
@@ -141,7 +124,9 @@ class BuildPlan:
         nr = len(self.routers)
         pr = self.configs["router-cost"]
 
-        return c + (b - (nb * pb + nr * pr))
+        self.total_score = c + (b - (nb * pb + nr * pr))
+
+        return self.total_score
 
     def get_draw(self):
         
@@ -250,3 +235,36 @@ class BuildPlan:
             newbp.map[router.coords] = router
 
         return newbp
+    
+    def generate_routers(self):
+        router_range = int(self.configs["router-range"])
+
+        optimal_nrouters = self.target_count // router_range
+
+        while optimal_nrouters * int(self.configs["router-cost"]) > self.configs["budget"]:
+            optimal_nrouters -= 1
+        
+        for i in range(optimal_nrouters):
+            while True:
+                nx = randint(0, self.max_x)
+                ny = randint(0, self.max_y)
+                coords = Coords(nx, ny)
+                obj = self.map.get(coords, None)
+                if obj and type(obj) == Target:
+                    r = Router(coords, router_range)
+                    self.routers.append(r)
+                    self.map[coords] = r
+                    break
+        print(self.routers)
+
+    def copy(self):
+        new_bp = BuildPlan(self.input_file,False)
+
+        new_bp.original_map = copy.deepcopy(self.original_map)
+        new_bp.map = copy.deepcopy(self.original_map)
+        new_bp.target_count = self.target_count
+        new_bp.max_x = self.max_x
+        new_bp.max_y = self.max_y
+        new_bp.configs = copy.deepcopy(self.configs)
+
+        return new_bp

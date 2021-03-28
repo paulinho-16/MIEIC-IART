@@ -1,4 +1,4 @@
-{"budget": 1000, "router-range": 3, "router-cost": 300, "backbone-cost": 1, "x": 7, "y": 2}
+{"budget": 1000, "router-range": 4, "router-cost": 300, "backbone-cost": 1, "x": 7, "y": 2}
 ----------------------
 -########----########-
 -#.....b######......#-
