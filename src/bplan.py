@@ -255,7 +255,6 @@ class BuildPlan:
                     self.routers.append(r)
                     self.map[coords] = r
                     break
-        print(self.routers)
 
     def copy(self):
         new_bp = BuildPlan(self.input_file,False)

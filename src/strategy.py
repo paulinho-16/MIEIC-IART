@@ -1,9 +1,11 @@
 import random
 import math
 import heapq
+from router import Router
 
 class Strategy():
     def __init__(self, buildPlan):
+        buildPlan.generate_routers()
         self.buildPlan = buildPlan
         self.score = buildPlan.get_total_score()
         print("INITIAL SCORE: ", self.score)
@@ -19,14 +21,16 @@ class HillClimbing(Strategy):
         while failed_tries < iterations:
             newbp = self.buildPlan.generate_neighbour()
             new_score = newbp.get_total_score()
-            print("NEW SCORE: ", new_score)
+            printable = "NEW SCORE {}".format(new_score)
             if (new_score > self.score):
                 self.score = new_score
                 self.buildPlan = newbp
+                printable += " ACCEPTED"
             else:
                 failed_tries += 1
+                printable += " REJECTED"
+            print(printable)
 
-        print("FINAL SCORE: ", self.score)
         return self.buildPlan
 
 class SimulatedAnnealing(Strategy):
@@ -40,48 +44,54 @@ class SimulatedAnnealing(Strategy):
             newbp = self.buildPlan.generate_neighbour()
             new_score = newbp.get_total_score()
             score_diff = (new_score - self.score)
-            temperature = temperature * math.pow(10,math.floor(math.log10(max(abs(score_diff),1))))
+            temperature = temperature * math.pow(10, math.floor(math.log10(max(abs(score_diff), 1))))
             percentage = math.exp(-abs(score_diff) / temperature)
             random_percentage = random.uniform(0,0.5)
-            printable = "PERC {} COMP SCORE {} RD {} ".format(percentage, new_score, random_percentage)
+            printable = "NEW SCORE {}".format(self.score)
 
             if score_diff > 0 or percentage > random_percentage:
                 self.buildPlan = newbp
                 self.score = new_score
                 printable += " ACCEPTED"
-                if score_diff <= 0:
+                if score_diff < 0:
                     printable += " FROM MATH EXP"
-            
-            printable += " SCORE {}".format(self.score)
+            else:
+                printable += " REJECTED"
             print(printable)
 
         return self.buildPlan
 
 class TabuSearch(Strategy):
+    def __init__(self, buildPlan, min_tabu_tenure, max_tabu_tenure):
+        super(self, buildPlan)
+        self.min_tabu_tenure = min_tabu_tenure
+        self.max_tabu_tenure = max_tabu_tenure
+
     def isTabu(self, score, tabuList):
         router_range = int(self.buildPlan.configs["router-range"])
+        value_range = math.pow(10, math.floor(math.log10(max(abs(router_range), 1))))
         for tabu in tabuList:
-            if score <= tabu + router_range:
+            if score < tabu - value_range or score == tabu:
                 return True
         return False
 
     def algorithm(self, iterations):
-        max_tabu = 5
         tabu = []
+        tabu_size = self.min_tabu_tenure
 
         for i in range(iterations):
-            
-            while len(tabu) >= max_tabu:
+            while len(tabu) >= tabu_size:
                 tabu.pop(0)
             
             newbp = self.buildPlan.generate_neighbour()
             new_score = newbp.get_total_score()
 
-            printable = "SCORE {} ".format(new_score)
+            printable = "NEW SCORE {} ".format(new_score)
 
             if self.isTabu(new_score, tabu):
-                max_tabu += 1
-                printable += "NOT ACCEPTED "
+                tabu_size = min(tabu_size+1, self.max_tabu_tenure)
+                printable += "REJECTED "
+                printable += "TABU LIST {} ".format(tabu)
                 print(printable)
                 continue
             elif new_score > self.score:
@@ -89,14 +99,11 @@ class TabuSearch(Strategy):
                 self.score = new_score
                 printable += "ACCEPTED "
             
-            max_tabu = max(max_tabu-1,5)
+            tabu_size = max(tabu_size-1, self.min_tabu_tenure)
             tabu.append(new_score)
-            printable += "TABU {} ".format(tabu)
-        
+            printable += "TABU LIST {} ".format(tabu)
             print(printable)
 
-
-        print("FINAL SCORE: ", self.score)
         return self.buildPlan
 
 class GeneticAlgorithm():
@@ -115,13 +122,14 @@ class GeneticAlgorithm():
 
         for i in range(iterations):
             parent1 = heapq.nlargest(1, self.generation)[0] # best
-            parent2 = heapq.nsmallest(length - 1 ,self.generation)[random.randint(0,length-2)] # random
+            parent2 = heapq.nsmallest(length - 1, self.generation)[random.randint(0, length-2)] # random
             child = self.reproduce(parent1, parent2)
-            print("REMOVING " , heapq.heapreplace(self.generation, child).total_score)
-            print("ANOTHER CHILD ",str(child.total_score))
-        
+            printable = "NEW CHILD SCORE {} ".format(str(child.total_score))
+            printable += "REMOVED SCORE {} ".format(heapq.heapreplace(self.generation, child).total_score)
+            printable += "GENERATION {}".format([mb.total_score for mb in self.generation])
+            print(printable)
+            
         best = heapq.nlargest(1,self.generation)[0]
-        print("FINAL SCORE: ", best.total_score)
         return best
 
     def reproduce(self, parent1, parent2):
@@ -133,7 +141,10 @@ class GeneticAlgorithm():
 
         while len(child) < len(parent1.routers):
             router_id = random.randint(0, len(parent2.routers)-1)
-            child.add(parent2.routers[router_id])
+            router = parent2.routers[router_id]
+            if random.uniform(0, 1.0) > 0.80:
+                router = Router(router.generate_neighbour(parent2), router.rrange)
+            child.add(router)
             
         new_bplan = parent1.copy()
         new_bplan.routers = list(child)

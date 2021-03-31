@@ -81,7 +81,7 @@ class Router(Cell):
         
         return generate_targets(build_plan)
 
-    def generate_neighbour(self, build_plan):  # Basic "Hill Climbing" (random)
+    def generate_neighbour(self, build_plan):
         neighbourhood_range = int(log10(self.rrange) * 5)
         x = self.coords.x
         y = self.coords.y
