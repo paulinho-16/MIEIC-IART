@@ -18,7 +18,7 @@ if __name__ == "__main__":
     """)
     
     questions = [
-        inquirer.List('problem', message="Choose the problem", choices=['example', 'charleston-road', 'plan1', 'rue-de-londres', 'opera', 'lets-go-higher'],),
+        inquirer.List('problem', message="Choose the problem", choices=['example', 'pacman-bunker', 'space-ship', 'office', 'charleston-road', 'big-house'],),
         inquirer.Text('budget', message="Budget"),
         inquirer.Text('router-range', message="Router Range"),
         inquirer.Text('router-cost', message="Router Cost"),
@@ -71,11 +71,11 @@ if __name__ == "__main__":
     if algorithm:
         solutionbp = algorithm.algorithm(iterations)
         print("FINAL SCORE: ", solutionbp.total_score)
-        print([str(r.coords) for r in solutionbp.routers])
         output = open("./out/{}.data".format(problem), "w")
         output.write(solutionbp.get_draw())
         output.close()
         parser.data_to_image("./out/{}.data".format(problem),"./out/{}.png".format(problem))
+        print("Generated Image at {}".format("./out/{}.png".format(problem)))
         
     end = time.time()
     print("TOTAL TIME: " + str(end - start))

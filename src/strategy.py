@@ -47,14 +47,14 @@ class SimulatedAnnealing(Strategy):
             temperature = temperature * math.pow(10, math.floor(math.log10(max(abs(score_diff), 1))))
             percentage = math.exp(-abs(score_diff) / temperature)
             random_percentage = random.uniform(0,0.5)
-            printable = "NEW SCORE {}".format(self.score)
+            printable = "NEW SCORE {}".format(new_score)
 
             if score_diff > 0 or percentage > random_percentage:
                 self.buildPlan = newbp
                 self.score = new_score
                 printable += " ACCEPTED"
                 if score_diff < 0:
-                    printable += " FROM MATH EXP"
+                    printable += " FROM PROBABILITY"
             else:
                 printable += " REJECTED"
             print(printable)
