@@ -63,7 +63,7 @@ class SimulatedAnnealing(Strategy):
 
 class TabuSearch(Strategy):
     def __init__(self, buildPlan, min_tabu_tenure, max_tabu_tenure):
-        super(self, buildPlan)
+        super().__init__(buildPlan)
         self.min_tabu_tenure = min_tabu_tenure
         self.max_tabu_tenure = max_tabu_tenure
 
