@@ -16,12 +16,12 @@ class Strategy():
 class HillClimbing(Strategy):
 
     def algorithm(self, iterations):
-        new_score = self.score - 1
-        failed_tries = 0
-        while failed_tries < iterations:
+        for i in range(iterations):
             newbp = self.buildPlan.generate_neighbour()
             new_score = newbp.get_total_score()
+
             printable = "NEW SCORE {}".format(new_score)
+
             if (new_score > self.score):
                 self.score = new_score
                 self.buildPlan = newbp
