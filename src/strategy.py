@@ -27,7 +27,6 @@ class HillClimbing(Strategy):
                 self.buildPlan = newbp
                 printable += " ACCEPTED"
             else:
-                failed_tries += 1
                 printable += " REJECTED"
             print(printable)
 
@@ -71,12 +70,12 @@ class TabuSearch(Strategy):
         router_range = int(self.buildPlan.configs["router-range"])
         value_range = math.pow(10, math.floor(math.log10(max(abs(router_range), 1))))
         for tabu in tabuList:
-            if score < tabu - value_range or score == tabu:
+            if (score >= tabu - value_range and score <= tabu):
                 return True
         return False
 
     def algorithm(self, iterations):
-        tabu = []
+        tabu = [self.buildPlan.total_score]
         tabu_size = self.min_tabu_tenure
 
         for i in range(iterations):
@@ -106,7 +105,7 @@ class TabuSearch(Strategy):
 
         return self.buildPlan
 
-class GeneticAlgorithm():
+class GeneticAlgorithm(Strategy):
     def __init__(self, buildPlan, population):
         self.generation = []
         for i in range(population):

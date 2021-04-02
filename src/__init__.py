@@ -7,6 +7,7 @@ from router import Router
 from bparser import Parser
 import inquirer
 import time
+from os import mkdir
 
 if __name__ == "__main__":
 
@@ -32,6 +33,11 @@ if __name__ == "__main__":
     problem = answers['problem']
 
     parser = Parser()
+
+    try:
+        mkdir("./in/")
+    except OSError:
+        pass
     
     parser.image_to_data(
         "./images/{}.png".format(problem), 
@@ -62,7 +68,7 @@ if __name__ == "__main__":
         
     elif answers['algorithm'] == 'Genetic Algorithm':
         generation_size = [
-            inquirer.Text('generation', message="Generation Dimension")
+            inquirer.Text('generation', message="Population Dimension")
         ]
         answers_genetic = inquirer.prompt(generation_size)
         algorithm = GeneticAlgorithm(bp, int(answers_genetic['generation']))
@@ -70,12 +76,27 @@ if __name__ == "__main__":
     start = time.time()
     if algorithm:
         solutionbp = algorithm.algorithm(iterations)
-        print("FINAL SCORE: ", solutionbp.total_score)
+
+        print("------------------------------------")
+        print("FINAL SCORE:", solutionbp.total_score)
+        print("TOTAL ROUTERS:", len(solutionbp.routers))
+
+        covered = len(solutionbp.covered_targets) + len(solutionbp.routers)
+        count = solutionbp.target_count
+        target_cells_percentage = int(covered / count * 100)
+        print("TARGET PERCENTAGE: {}/{} ({}%)".format(covered, count, target_cells_percentage))
+
+        try:
+            mkdir("./out/")
+        except OSError:
+            pass
+
         output = open("./out/{}.data".format(problem), "w")
         output.write(solutionbp.get_draw())
         output.close()
-        parser.data_to_image("./out/{}.data".format(problem),"./out/{}.png".format(problem))
-        print("Generated Image at {}".format("./out/{}.png".format(problem)))
         
     end = time.time()
     print("TOTAL TIME: " + str(end - start))
+
+    parser.data_to_image("./out/{}.data".format(problem),"./out/{}.png".format(problem))
+    print("Generated Image at {}".format("./out/{}.png".format(problem)))
