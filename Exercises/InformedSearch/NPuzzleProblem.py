@@ -239,21 +239,21 @@ def compare_times(operators):
 
     start = datetime.now()
     res = ucs(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob1 by Uniform Cost Search:\n' + res[1])
-    print("Uniform Cost Search took " + str(time1) + " microseconds to solve prob1")
+    print("Uniform Cost Search took " + str(time) + " microseconds to solve prob1")
 
     start = datetime.now()
     res = gsa(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob1 by Greedy Search algorithm:\n' + res[1])
-    print("Greedy Search algorithm took " + str(time1) + " microseconds to solve prob1")
+    print("Greedy Search algorithm took " + str(time) + " microseconds to solve prob1")
 
     start = datetime.now()
     res = asa(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob1 by A* algorithm:\n' + res[1])
-    print("A* algorithm took " + str(time1) + " microseconds to solve prob1")
+    print("A* algorithm took " + str(time) + " microseconds to solve prob1")
 
     prob2 = [
         [1, 3, 6],
@@ -268,21 +268,21 @@ def compare_times(operators):
 
     start = datetime.now()
     res = ucs(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob2 by Uniform Cost Search:\n' + res[1])
-    print("Uniform Cost Search took " + str(time1) + " microseconds to solve prob2")
+    print("Uniform Cost Search took " + str(time) + " microseconds to solve prob2")
 
     start = datetime.now()
     res = gsa(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob2 by Greedy Search algorithm:\n' + res[1])
-    print("Greedy Search algorithm took " + str(time1) + " microseconds to solve prob2")
+    print("Greedy Search algorithm took " + str(time) + " microseconds to solve prob2")
 
     start = datetime.now()
     res = asa(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob2 by A* algorithm:\n' + res[1])
-    print("A* algorithm took " + str(time1) + " microseconds to solve prob2")
+    print("A* algorithm took " + str(time) + " microseconds to solve prob2")
 
     prob3 = [
         [1, 6, 2],
@@ -297,21 +297,21 @@ def compare_times(operators):
 
     start = datetime.now()
     res = ucs(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob3 by Uniform Cost Search:\n' + res[1])
-    print("Uniform Cost Search took " + str(time1) + " microseconds to solve prob3")
+    print("Uniform Cost Search took " + str(time) + " microseconds to solve prob3")
 
     start = datetime.now()
     res = gsa(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob3 by Greedy Search algorithm:\n' + res[1])
-    print("Greedy Search algorithm took " + str(time1) + " microseconds to solve prob3")
+    print("Greedy Search algorithm took " + str(time) + " microseconds to solve prob3")
 
     start = datetime.now()
     res = asa(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob3 by A* algorithm:\n' + res[1])
-    print("A* algorithm took " + str(time1) + " microseconds to solve prob3")
+    print("A* algorithm took " + str(time) + " microseconds to solve prob3")
 
     prob4 = [
         [5, 1, 3, 4],
@@ -327,21 +327,21 @@ def compare_times(operators):
 
     start = datetime.now()
     res = ucs(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob4 by Uniform Cost Search:\n' + res[1])
-    print("Uniform Cost Search took " + str(time1) + " microseconds to solve prob4")
+    print("Uniform Cost Search took " + str(time) + " microseconds to solve prob4")
 
     start = datetime.now()
     res = gsa(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob4 by Greedy Search algorithm:\n' + res[1])
-    print("Greedy Search algorithm took " + str(time1) + " microseconds to solve prob4")
+    print("Greedy Search algorithm took " + str(time) + " microseconds to solve prob4")
 
     start = datetime.now()
     res = asa(initial_state, operators, objective)
-    time1 = (datetime.now() - start).microseconds
+    time = (datetime.now() - start).microseconds
     print('\nSolution of prob4 by A* algorithm:\n' + res[1])
-    print("A* algorithm took " + str(time1) + " microseconds to solve prob4")
+    print("A* algorithm took " + str(time) + " microseconds to solve prob4")
 
 if __name__ == "__main__":
     initial_board = [

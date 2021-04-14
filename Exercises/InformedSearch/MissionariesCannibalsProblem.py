@@ -2,75 +2,95 @@ import sys
 import heapq as hq
 from datetime import datetime
 
-C1 = 4; C2 = 3; N = 2
+N = 3
 
 class State():
-    def __init__(self, W1=0, W2=0):
-        [self.W1, self.W2] = [W1, W2]
+    def __init__(self, nm=N, nc=N, nb=1):
+        [self.nm, self.nc, self.nb] = [nm, nc, nb]
     
     def write(self):
-        return '[' + str(self.W1) + ', ' + str(self.W2) + ']'
+        return '[' + str(self.nm) + ', ' + str(self.nc) + ', ' + str(self.nb) + ']'
 
     def copy(self):
-        return State(self.W1, self.W2)
+        return State(self.nm, self.nc, self.nb)
 
     def __eq__(self, other):
-        return self.W1 == other.W1 and self.W2 == other.W2
+        return self.nm == other.nm and self.nc == other.nc and self.nb == other.nb
 
-def emp1(state):
-    if state.W1 > 0:
-        state.W1 = 0
+def mm1(state):
+    if state.nb == 1 and state.nm >= 2 and ((state.nc <= state.nm - 2 and state.nm - 2 > 0) or state.nm - 2 == 0):
+        state.nm -= 2
+        state.nb = 0
         return True
     return False
 
-def emp2(state):
-    if state.W2 > 0:
-        state.W2 = 0
+def cc1(state):
+    if state.nb == 1 and state.nc >= 2 and ((N-state.nm >= N-state.nc+2 and N-state.nm > 0) or N-state.nm == 0):
+        state.nc -= 2
+        state.nb = 0
         return True
     return False
 
-def fill1(state):
-    if state.W1 < C1:
-        state.W1 = C1
+def mc1(state):
+    if state.nb == 1 and state.nm >= 1 and state.nc >= 1 and ((N-state.nm+1 >= N-state.nc+1 and N-state.nm+1 > 0) or N-state.nm+1 == 0):
+        state.nm -= 1
+        state.nc -= 1
+        state.nb = 0
         return True
     return False
 
-def fill2(state):
-    if state.W2 < C2:
-        state.W2 = C2
+def m1(state):
+    if state.nb == 1 and state.nm >= 1 and ((state.nm-1 >= state.nc and state.nm-1 > 0 and ((N-state.nm+1 >= N-state.nc and N-state.nm+1 > 0) or N-state.nm+1 == 0)) or state.nm-1 == 0):
+        state.nm -= 1
+        state.nb = 0
         return True
     return False
 
-def pour12a(state):
-    if state.W1 > 0 and state.W2 < C2 and state.W1 >= C2-state.W2:
-        state.W1 -= C2 - state.W2
-        state.W2 = C2
+def c1(state):
+    if state.nb == 1 and state.nc >= 1 and ((N-state.nm >= N-state.nc+1 and N-state.nm > 0) or N-state.nm == 0):
+        state.nc -= 1
+        state.nb = 0
         return True
     return False
 
-def pour12b(state):
-    if state.W1 > 0 and state.W2 < C2 and state.W1 < C2-state.W2:
-        state.W2 += state.W1
-        state.W1 = 0
+def mm2(state):
+    if state.nb == 0 and N-state.nm >= 2 and ((N-state.nm-2 >= N-state.nc and N-state.nm-2 > 0) or N-state.nm-2 == 0):
+        state.nm += 2
+        state.nb = 1
         return True
     return False
 
-def pour21a(state):
-    if state.W2 > 0 and state.W1 < C1 and state.W2 >= C1-state.W1:
-        state.W2 -= C1 - state.W1
-        state.W1 = C1
+def cc2(state):
+    if state.nb == 0 and N-state.nc >= 2 and ((state.nm >= state.nc+2 and state.nm > 0) or state.nm == 0):
+        state.nc += 2
+        state.nb = 1
         return True
     return False
 
-def pour21b(state):
-    if state.W2 > 0 and state.W1 < C1 and state.W2 < C1-state.W1:
-        state.W1 += state.W2
-        state.W2 = 0
+def mc2(state):
+    if state.nb == 0 and N-state.nm >= 1 and N-state.nc >= 1 and ((state.nm+1 >= state.nc+1 and state.nm+1 > 0) or state.nm+1 == 0):
+        state.nm += 1
+        state.nc += 1
+        state.nb = 1
+        return True
+    return False
+
+def m2(state):
+    if state.nb == 0 and N-state.nm >= 1 and ((N-state.nm-1 >= N-state.nc and N-state.nm-1 > 0 and state.nm+1 >= state.nc) or N-state.nm-1 == 0):
+        state.nm += 1
+        state.nb = 1
+        return True
+    return False
+
+def c2(state):
+    if state.nb == 0 and N-state.nc >= 1 and ((state.nm >= state.nc+1 and state.nm > 0) or state.nm == 0):
+        state.nc += 1
+        state.nb = 1
         return True
     return False
 
 def objective(state):
-    return state.W1 == N
+    return state.nm == 0 and state.nc == 0 and state.nb == 0
 
 def find_path(start, end):
     path = [end]
@@ -163,17 +183,19 @@ def ids(start, objective, operators, limit=10):
 
 def get_operator_cost(op):
     if op == None: return 0
-    elif op.__name__ == "fill1": return 1
-    elif op.__name__ == "fill2": return 1
-    elif op.__name__ == "emp1": return 1
-    elif op.__name__ == "emp2": return 1
-    elif op.__name__ == "pour12a": return 1
-    elif op.__name__ == "pour12b": return 1
-    elif op.__name__ == "pour21a": return 1
-    elif op.__name__ == "pour21b": return 1
+    elif op.__name__ == "mm1": return 1
+    elif op.__name__ == "cc1": return 1
+    elif op.__name__ == "mc1": return 1
+    elif op.__name__ == "m1": return 1
+    elif op.__name__ == "c1": return 1
+    elif op.__name__ == "mm2": return 1
+    elif op.__name__ == "cc2": return 1
+    elif op.__name__ == "mc2": return 1
+    elif op.__name__ == "m2": return 1
+    elif op.__name__ == "c2": return 1
 
-def heuristic(state): # number of liters of water needed for filling the first bucket with the desired value, in this case 2 liters
-    return abs(state.W1 - N)
+def heuristic(state): # number of missionaries and cannibals in the first margin
+    return (state.nm + state.nc) / 2
 
 # alínea a1)
 def gsa(initial_state, operators, objective):
@@ -232,7 +254,7 @@ def asa(initial_state, operators, objective):
 """
 def compare_times(operators):
     initial_state = State()
-    initial_state.parent = State(-1, -1)
+    initial_state.parent = State(-1, -1, -1)
 
     start = datetime.now()
     res = bfs(initial_state, operators, objective)
@@ -241,14 +263,14 @@ def compare_times(operators):
     print("Breadth-First Search algorithm took " + str(time) + " microseconds")
 
     start = datetime.now()
-    sol = dfs(initial_state, objective, operators, 10)
+    sol = dfs(initial_state, objective, operators, 12)
     res = find_path(initial_state, sol[-1]) if sol else []
     time = (datetime.now() - start).microseconds
     print('\nSolution by Depth-First Search with limited depth:\n' + res[1])
     print("Depth-First Search with limited depth took " + str(time) + " microseconds")
 
     start = datetime.now()
-    sol = ids(initial_state, objective, operators, 10)
+    sol = ids(initial_state, objective, operators, 12)
     res = find_path(initial_state, sol[-1]) if sol else []
     time = (datetime.now() - start).microseconds
     print('\nSolution by Iterative deepening strategy:\n' + res[1])
@@ -268,10 +290,10 @@ def compare_times(operators):
 
 if __name__ == "__main__":
     initial_state = State()
-    initial_state.parent = State(-1, -1)
-    operators = [fill1, fill2, emp1, emp2, pour12a, pour12b, pour21a, pour21b]
+    initial_state.parent = State(-1, -1, -1)
+    operators = [mm1, cc1, mc1, m1, c1, mm2, cc2, mc2, m2, c2]
     if len(sys.argv) != 2:
-        print('Usage: TwoBucketsProblem.py <algorithm>')
+        print('Usage: MissionariesCannibalsProblem.py <algorithm>')
         print('\t<algorithm> -> informed search algorithm (gsa, asa)')
         exit(1)
     if (sys.argv[1].lower() == 'gsa'):
