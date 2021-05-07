@@ -26,12 +26,24 @@ symptoms = list(columns)
 symptoms.remove("TYPE")
 deseases = list(data["TYPE"].unique())
 
-# for i in symptoms:
-#     values = data[i].unique()
-#     if not np.array_equiv(np.sort(values), np.array([0,1])):
-#         print("Column {} has different values: {}".format(i, values))
+for i in symptoms:
+    values = data[i].unique()
+    if not np.array_equiv(np.sort(values), np.array([0,1])):
+        print("Column {} has different values: {}".format(i, values))
 
-# print()
+print()
+
+count_desease = pd.DataFrame(data["TYPE"]).value_counts().rename_axis('TYPE').reset_index(name='count')
+plot_st = sb.barplot(data=count_desease, x="count", y="TYPE")
+plot_st.get_figure().savefig("./out/total_deseases.png", dpi=200)
+plot_st.get_figure().clf()
+
+
+sum_columns = { "columns" : list(columns.drop("TYPE")) + [ r["TYPE"] for i,r in count_desease.iterrows() ], "total" : [data[c].sum() for c in columns if c != 'TYPE'] + [ r["count"] for i,r in count_desease.iterrows() ]}
+sum_columns = pd.DataFrame(sum_columns)
+plot_st = sb.barplot(data=sum_columns, x="total", y="columns")
+plot_st.get_figure().savefig("./out/sum_total.png", dpi=200)
+plot_st.get_figure().clf()
 
 
 similarity = data.drop("TYPE", axis=1)
@@ -41,27 +53,27 @@ plot_s.get_figure().savefig("./out/similarity.png", dpi=200)
 plot_s.get_figure().clf()
 
 
-sum_columns = { "columns" : list(columns.drop("TYPE")), "total" : [data[c].sum() for c in columns if c != 'TYPE'] }
-sum_columns = pd.DataFrame(sum_columns)
-plot_st = sb.barplot(data=sum_columns, x="total", y="columns")
-plot_st.get_figure().savefig("./out/sum_total.png", dpi=200)
-plot_st.get_figure().clf()
-
-
 total_symptoms = data.copy()
 total_symptoms["TOTAL"] = total_symptoms.sum(axis=1)
 total_symptoms = total_symptoms[["TYPE", "TOTAL"]]
-# for d in deseases:
-#     n = total_symptoms.loc[total_symptoms["TYPE"] == d]
-#     mean = float(n.mean())
-#     std = float(n.std())
 
-#     for i,r in n.iterrows():
-#         old = total_symptoms.iat[i,1]
-#         new = int(float(old - mean) / std * 100)
-#         total_symptoms.iat[i,1] = new
-plot_ts = sb.displot(data=total_symptoms, x="TOTAL", hue="TYPE", binwidth=1, fill=False, element="step")
-plot_ts.savefig("./out/total_symptoms.png", dpi=200)
+ts = pd.DataFrame(0, index=np.arange(16), columns=deseases)
+
+for d in deseases:
+    n = total_symptoms.loc[total_symptoms["TYPE"] == d]
+    occ = n["TOTAL"].value_counts()
+    mx = float(occ.max())
+    mn = float(occ.min())
+
+    ddt = pd.DataFrame(occ).sort_index(0)
+
+    for i,r in ddt.iterrows():
+        old = r["TOTAL"]
+        new = float(old - mn) / float(mx-mn)
+        ts.loc[i,d] = new
+
+plot_ts = sb.lineplot(data=ts)
+plot_ts.get_figure().savefig("./out/total_symptoms.png", dpi=200)
 
 
 frequency_symptoms = []
