@@ -1,4 +1,3 @@
-
 #### IMPORT LIBRARIES
 
 import pandas as pd
@@ -58,7 +57,7 @@ plot_st.get_figure().clf()
 
 # Count total number of records per symptom
 print("Ploting total number of records per symptom (sum_total.png)")
-sum_columns = { "columns" : list(columns.drop("TYPE")) + [ r["TYPE"] for i,r in count_desease.iterrows() ], "total" : [data[c].sum() for c in columns if c != 'TYPE'] + [ r["count"] for i,r in count_desease.iterrows() ]}
+sum_columns = { "columns" : list(columns.drop("TYPE")), "total" : [data[c].sum() for c in columns if c != 'TYPE']}
 sum_columns = pd.DataFrame(sum_columns)
 plot_st = sb.barplot(data=sum_columns, x="total", y="columns")
 plot_st.get_figure().savefig("./out/2_sum_total.png", dpi=200)
@@ -161,22 +160,32 @@ data_total = data_total.apply(lambda x : float(x - mn) / float(mx-mn))
 data['TOTAL'] = data_total
 
 
+from sklearn.neighbors import DistanceMetric
+
+dist = DistanceMetric.get_metric('matching')
+np.set_printoptions(suppress=True, precision=2)
+sample = data.sample(500)
+similarity = dist.pairwise(sample)
+print("MAX VALUE {}\nMIN VALUE {}\nMEAN {}".format(np.amax(similarity), np.min(similarity[np.nonzero(similarity)]), np.mean(similarity)))
+np.savetxt("./out/similarity.csv", np.around(similarity, 2), delimiter=",")
+
 # Univariate Selection to find the best scoring features
 # https://en.wikipedia.org/wiki/Dimensionality_reduction
-from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.decomposition import PCA
 
-fit = SelectKBest().fit(data[symptoms + ["TOTAL"]], y=data['class'])
-plot_st = sb.barplot(x=fit.scores_, y=symptoms + ["TOTAL"], orient="h")
+fit = SelectKBest(chi2).fit(data[symptoms], y=data['class'])
+plot_st = sb.barplot(x=fit.scores_, y=symptoms, orient="h")
 plot_st.get_figure().savefig("./out/6_kbest_features.png", dpi=200)
 plot_st.get_figure().clf()
 
 pca = PCA()
 pca = pca.fit(data[symptoms + ["TOTAL"]], y=data['class'])
-plot_st = sb.barplot(x=pca.explained_variance_ratio_, y=symptoms + ["TOTAL"], orient="h")
+plot_st = sb.barplot(x=pca.explained_variance_, y=symptoms + ["TOTAL"], orient="h")
 plot_st.get_figure().savefig("./out/7_pca.png", dpi=200)
 plot_st.get_figure().clf()
 
+exit()
 
 # Aggregate similar symptoms
 # New symptom = [LOGICAL OR] 'NAUSEA', 'VOMITING', 'DIARRHEA', 'SHORTNESS_OF_BREATH', 'DIFFICULTY_BREATHING'
@@ -210,8 +219,8 @@ plot_st.get_figure().savefig("./out/9_kbest_features_2.png", dpi=200)
 plot_st.get_figure().clf()
 
 
-pca = PCA()
-pca = pca.fit(data[new_columns], y=data['class'])
-plot_st = sb.barplot(x=pca.explained_variance_ratio_, y=new_columns, orient="h")
-plot_st.get_figure().savefig("./out/10_pca_2.png", dpi=200)
-plot_st.get_figure().clf()
+# pca = PCA()
+# pca = pca.fit(data[new_columns], y=data['class'])
+# plot_st = sb.barplot(x=pca.explained_variance_, y=new_columns, orient="h")
+# plot_st.get_figure().savefig("./out/10_pca_2.png", dpi=200)
+# plot_st.get_figure().clf()
