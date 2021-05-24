@@ -308,6 +308,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 import time
+import joblib
 
 # %% [markdown]
 # #### Decision Tree
@@ -335,6 +336,7 @@ cross_validation = StratifiedKFold(n_splits=10,  shuffle=True)
 grid_search = GridSearchCV(decision_tree_classifier,
                            param_grid=parameter_grid,
                            cv=cross_validation)
+
 print("DECISION TREE CLASSIFIER:")
 print()
 
@@ -361,8 +363,11 @@ print(classification_report(y_test, y_pred))
 plot_cfmx = sb.heatmap(cfmx, xticklabels=diseases, yticklabels=diseases, annot=True)
 plt.show()
 
+filename = 'dt_model.sav'
+joblib.dump(grid_search, filename)
+
 # %% [markdown]
-# ![](./out/graphviz.png)
+# ![](./images/decision-tree.png)
 # %% [markdown]
 # #### Random Forest
 # We also tried the Random Forest Classifier. 
@@ -420,6 +425,9 @@ print(classification_report(y_test, y_pred))
 plot_cfmx = sb.heatmap(cfmx, xticklabels=diseases, yticklabels=diseases, annot=True)
 plt.show()
 
+filename = 'rf_model.sav'
+joblib.dump(grid_search, filename)
+
 # %% [markdown]
 # #### Support Vector Machine
 # SVMs are a discriminative classifier: that is, they draw a boundary between clusters of data. We also tested it with different values for the *kernel* parameter and let the GridSearch to choose the best.
@@ -461,6 +469,9 @@ print("Report: ")
 print(classification_report(y_test, y_pred))
 plot_cfmx = sb.heatmap(cfmx, xticklabels=diseases, yticklabels=diseases, annot=True)
 plt.show()
+
+filename = 'svm_model.sav'
+joblib.dump(grid_search, filename)
 
 # %% [markdown]
 # #### KNeighbors
@@ -515,6 +526,9 @@ print(classification_report(y_test, y_pred))
 plot_cfmx = sb.heatmap(cfmx, xticklabels=diseases, yticklabels=diseases, annot=True)
 plt.show()
 
+filename = 'knn_model.sav'
+joblib.dump(grid_search, filename)
+
 # %% [markdown]
 # #### Neural Networks
 # Finally, we also applied NN before, with a set of different parameters which can be tested replacing the parameter grid in the code with this one:
@@ -522,10 +536,8 @@ plt.show()
 # parameter_grid_nn = {
 #                 'activation': ['relu','tanh'],
 #                 'solver': ['sgd', 'adam'],
-#                 'hidden_layer_sizes' : [(12,12,12,12),(8,8,8,8,8))]}
+#                 'hidden_layer_sizes' : [(12,12,12,12), (8,8,8,8,8), (3,32,6,32), (3,5,12,32)]}
 # ```
-# (3,32,6,32)
-# (3,5,12,32)
 # 
 
 # %%
@@ -576,8 +588,73 @@ print(classification_report(y_test, y_pred))
 plot_cfmx = sb.heatmap(cfmx, xticklabels=diseases, yticklabels=diseases, annot=True)
 plt.show()
 
+filename = 'nn_model.sav'
+joblib.dump(grid_search, filename)
+
+# %% [markdown]
+# ### Algorithms Comparison
+# 
+# #### Time Spent (Training)
+# 
+# <img src="./images/time.png" width="50%">
+# 
+# #### Evaluation Metrics
+# 
+# <img src="./images/metrics.png" width="50%">
+# 
+# By analysing these graphics, we conclude that the most efficient algorithm is the DECISION TREE, since it achieves the best results in the shortest time. This might be due to the nature of our problem, which can be represented by a simple set of Yes/No decisions, easily represented by a tree.
+# %% [markdown]
+# ### Bonus
+# 
+# These models can be tested on a single independent test instance.
+# Provide your input on the following questions and see the diagnosis from our different algorithms.
 
 # %%
+print(symptoms)
 
+def yes_or_no(question):
+    while "the answer is invalid":
+        reply = str(input(question + ' (y/n): ')).lower().strip()
+        if reply[0] == 'y':
+            return 1
+        if reply[0] == 'n':
+            return 0
+test_input = []
+for c in symptoms:
+    answer = yes_or_no("Do you have {}?".format(c))
+    test_input.append(answer)
+
+test_df = pd.DataFrame(data=[test_input], columns=symptoms)
+
+key_list = list(dictionary.keys())
+val_list = list(dictionary.values())
+
+test_df['VOMIT'] = test_df['NAUSEA'] + test_df['VOMITING'] + test_df['DIARRHEA'] + test_df['SHORTNESS_OF_BREATH'] + test_df['DIFFICULTY_BREATHING']
+test_df['VOMIT'] = test_df['VOMIT'].apply(lambda x: int(bool(x)))
+test_df = test_df.drop(['NAUSEA', 'VOMITING', 'DIARRHEA', 'SHORTNESS_OF_BREATH', 'DIFFICULTY_BREATHING'], axis=1)
+test_df['ITCHY'] = test_df['ITCHY_NOSE'] + test_df['ITCHY_EYES'] + test_df['ITCHY_MOUTH'] + test_df['ITCHY_INNER_EAR'] + test_df['PINK_EYE']
+test_df['ITCHY'] = test_df['ITCHY'].apply(lambda x: int(bool(x)))
+test_df = test_df.drop(['ITCHY_NOSE', 'ITCHY_EYES', 'ITCHY_MOUTH', 'ITCHY_INNER_EAR', 'PINK_EYE'], axis=1)
+
+print()
+dt_model = joblib.load('dt_model.sav')
+prediction = dt_model.predict(test_df)
+print("DT says you have", key_list[val_list.index(prediction)])
+
+rf_model = joblib.load('rf_model.sav')
+prediction = rf_model.predict(test_df)
+print("RF says you have", key_list[val_list.index(prediction)])
+
+svm_model = joblib.load('svm_model.sav')
+prediction = svm_model.predict(test_df)
+print("SVM says you have", key_list[val_list.index(prediction)])
+
+knn_model = joblib.load('knn_model.sav')
+prediction = knn_model.predict(test_df)
+print("KNN says you have", key_list[val_list.index(prediction)])
+
+nn_model = joblib.load('nn_model.sav')
+prediction = nn_model.predict(test_df)
+print("NN says you have", key_list[val_list.index(prediction)])
 
 
